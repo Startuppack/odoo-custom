@@ -49,6 +49,7 @@ RUN set -eux; \
       "https://github.com/OCA/server-brand.git|c296e5a6284a7bf7f6fe8f941685cbf31f89375a" \
       "https://github.com/OCA/web.git|f9eb80e0da0dce4d67edb1237293364237f96a95" \
       "https://github.com/OCA/website.git|7e44dc36e688fea2f8971051dc4170d1e0951328" \
+      "https://github.com/OCA/e-commerce.git|5afd6941191952c10ab58b288c3aa53e2b24f9b4" \
       "https://github.com/OCA/partner-contact.git|78a933a8702a55ee2880d12bbe0746a150d76377" \
       "https://github.com/OCA/reporting-engine.git|7a156caae6558276408854ef26b729331e974361" \
       "https://github.com/OCA/queue.git|d3ce20aa625fc4ee4a9984bf0b4dd6196fcfc0ed" \
