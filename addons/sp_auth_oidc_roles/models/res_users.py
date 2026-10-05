@@ -83,12 +83,31 @@ class ResUsers(models.Model):
             # from whichever of the three the caller actually filled in.
             login = (self.sudo().login if self else None) \
                 or credential.get("login") or self.env.user.login
-            if login not in self._SP_LOCAL_LOGIN_ALLOWED:
+            # Exception webshop : un client de la boutique est un utilisateur
+            # PORTAIL (share=True). Il n'a AUCUNE identité Keycloak — un mot de
+            # passe local est sa seule porte d'entrée (inscription publique du
+            # shop). La règle « SSO seul » protège les comptes INTERNES/org gérés
+            # dans KC ; elle n'a pas de sens pour ces clients externes. On autorise
+            # donc le mot de passe pour un utilisateur share, jamais pour un
+            # interne. Le login est résolu depuis la base car `self` est vide sur
+            # le gate RPC (cf. commentaire ci-dessus).
+            if login not in self._SP_LOCAL_LOGIN_ALLOWED \
+                    and not self._sp_is_portal_customer(login):
                 _logger.info(
                     "SSO seul : mot de passe refusé pour %s (uid=%s) — "
                     "authentification par Keycloak uniquement", login, self.env.uid)
                 raise AccessDenied()
         return super()._check_credentials(credential, env)
+
+    def _sp_is_portal_customer(self, login):
+        """Vrai si `login` est un utilisateur share (portail/public) : un client
+        du webshop sans identité Keycloak, pour qui le mot de passe local est la
+        seule authentification. Un compte interne renvoie toujours False."""
+        if not login:
+            return False
+        user = self.env["res.users"].sudo().search(
+            [("login", "=", login)], limit=1)
+        return bool(user) and user.share
 
     # « Époque de session » : changer cette valeur invalide TOUTES les sessions
     # Odoo de l'utilisateur (cf. _compute_session_token). Utilisé par le
