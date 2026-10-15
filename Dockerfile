@@ -30,6 +30,12 @@ RUN mkdir -p /opt/oca-addons
 #  - `contract` fournit subscription_oca (ABONNEMENTS).
 #  - `l10n-france`, `edi`, `edi-framework` fournissent la FACTURATION
 #    ÉLECTRONIQUE FR / PDP (Factur-X, Chorus Pro, cadre EDI account_edi).
+#  - `account-financial-reporting` + `mis-builder` : RAPPORTS FINANCIERS
+#    (Grand livre, Balance, Bilan, Compte de résultat) — OSS vs Enterprise.
+#  - `account-reconcile` : LETTRAGE avancé / rapprochement bancaire.
+#  - `bank-statement-import` : IMPORT de relevés bancaires (CSV/OFX/QIF).
+#  - `payroll` fournit hr.payslip (PAIE / bulletins de salaire, remplace le
+#    module hr_payroll Enterprise). Dépend de hr_work_entry_holidays + mail.
 # Dépôts OCA + akretion ÉPINGLÉS à un commit (snapshot cohérent 2026-09-24) :
 # reproductibilité + évite la dérive inter-dépôts qui cassait l10n_fr_einvoicing_import.
 RUN set -eux; \
@@ -55,13 +61,16 @@ RUN set -eux; \
       "https://github.com/OCA/account-financial-tools.git|e4c1b86aa0a61d9f484c1a7e9830a63f5e6a2233" \
       "https://github.com/OCA/account-financial-reporting.git|9291961e21c9af317f4972dd90e877730759a39f" \
       "https://github.com/OCA/account-invoicing.git|4a634ffce03546de8220e8dcf57b9fc159bf0b67" \
+      "https://github.com/OCA/account-reconcile.git|bfc46f80626c0669ddd7a296f10a864bc36d6abb" \
       "https://github.com/OCA/bank-payment.git|57975b134737b71eb9762f24746422fe828133a5" \
+      "https://github.com/OCA/bank-statement-import.git|01be32ea73e485e9b2495ea80fcce934badedeea" \
       "https://github.com/OCA/account-payment.git|8de2cff9d2b0c9b388ef9569823420c998dff868" \
       "https://github.com/OCA/intrastat-extrastat.git|917cea1f86a5e3bcec496f92005db31fbcdfbd73" \
       "https://github.com/OCA/sale-workflow.git|a86d8041599b49efb2fc35e36a3905ebcc1ded0f" \
       "https://github.com/OCA/purchase-workflow.git|80ef750ffe0f49addf3289a50afc7618a60782f4" \
       "https://github.com/OCA/stock-logistics-warehouse.git|53d75c6399df1a72611f1fa1a162e5ce9da75d18" \
       "https://github.com/OCA/hr.git|33ad2e23b682d6abcbbdc98ac4b6807fa2e180fa" \
+      "https://github.com/OCA/payroll.git|4c71cd42e46a09a7512d92f5c63c0a9f7c26ad3e" \
       "https://github.com/OCA/project.git|2780d8a3041a97966cd808fd253a67aea66bc40b" \
       "https://github.com/OCA/mis-builder.git|4f9eef0954af7dfdb1d13451f4d860602b074cda" \
       "https://github.com/OCA/l10n-france.git|24a69693f421503f8798ada6af0c046cb3f054d0" \
