@@ -57,7 +57,7 @@ RUN set -eux; \
       "https://github.com/OCA/mail.git|81977d4e3919b7e87f229f4570cdbc4dee9ebe84" \
       "https://github.com/OCA/knowledge.git|c6ea66af11876215b1aaac68975fa6cbcd586e57" \
       "https://github.com/OCA/crm.git|07c248596b687fb71e74fefe1fa2e100068ac39d" \
-      "https://github.com/OCA/contract.git|14b3b89b55f481427fd08bf350ef68d320e8903a" \
+      "https://github.com/OCA/contract.git|58da89b5f110b00030e0e6956c1e0f7bfca03de3" \
       "https://github.com/OCA/account-financial-tools.git|e4c1b86aa0a61d9f484c1a7e9830a63f5e6a2233" \
       "https://github.com/OCA/account-financial-reporting.git|9291961e21c9af317f4972dd90e877730759a39f" \
       "https://github.com/OCA/account-invoicing.git|4a634ffce03546de8220e8dcf57b9fc159bf0b67" \
