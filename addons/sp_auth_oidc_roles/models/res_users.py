@@ -8,8 +8,8 @@
 # dans `resource_access.odoo.roles` de l'id_token (mapper `client-roles-userinfo`
 # côté Keycloak, claim posé sur id+access+userinfo). On override le hook standard
 # `_auth_oauth_signin` (cf. son docstring « can be overridden ») pour appliquer
-# les groupes après chaque connexion → Keycloak reste la source de vérité,
-# resynchronisée à chaque login.
+# les groupes après connexion uniquement pour le provider OAuth Startup Pack
+# → Keycloak reste la source de vérité, resynchronisée à chaque login.
 
 import hashlib
 import logging
@@ -164,10 +164,15 @@ class ResUsers(models.Model):
 
         login = super()._auth_oauth_signin(provider, validation, params)
         if login:
-            try:
-                self._sp_sync_oidc_groups(login, validation, params)
-            except Exception:  # jamais bloquer le login pour un souci de mapping
-                _logger.exception("sp_auth_oidc_roles: sync groupes échouée pour %s", login)
+            if self._sp_is_startuppack_provider(provider):
+                try:
+                    self._sp_sync_oidc_groups(login, validation, params)
+                except Exception:  # jamais bloquer le login pour un souci de mapping
+                    _logger.exception("sp_auth_oidc_roles: sync groupes échouée pour %s", login)
+            else:
+                _logger.info(
+                    "sp_auth_oidc_roles: mapping groupes ignoré pour %s "
+                    "(provider OAuth non Startup Pack, id=%s)", login, provider)
             # Mémorise de quoi faire un RP-initiated logout (end-session Keycloak)
             # à la déconnexion : sans ça, le logout Odoo ne ferme QUE la session
             # Odoo et laisse la session SSO Keycloak vivante (re-login silencieux).
@@ -185,6 +190,29 @@ class ResUsers(models.Model):
             except Exception:
                 _logger.exception("sp_auth_oidc_roles: capture session logout SSO")
         return login
+
+    @api.model
+    def _sp_is_startuppack_provider(self, provider_id):
+        """Role mapping is restricted to Startup Pack's Odoo OAuth clients.
+
+        The chart names those clients ``odoo-<tenant>``. A legacy client named
+        exactly ``odoo`` is accepted only when its provider label identifies
+        Startup Pack, so a separate "Client Portal" provider cannot promote
+        its users either.
+        """
+        try:
+            provider = (
+                self.env["auth.oauth.provider"].sudo()
+                .browse(int(provider_id)).exists()
+            )
+        except (TypeError, ValueError):
+            return False
+        if not provider:
+            return False
+        client_id = (provider.client_id or "").strip().lower()
+        if client_id.startswith("odoo-"):
+            return True
+        return client_id == "odoo" and "startup pack" in (provider.name or "").casefold()
 
     @api.model
     def _sp_decode_jwt_claims(self, token):
