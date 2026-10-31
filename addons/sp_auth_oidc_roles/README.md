@@ -10,10 +10,11 @@ Keycloak SSO session**. This module fixes both.
 ## Features
 
 - **Role → group mapping at login.** Reads `resource_access.odoo.roles` (and realm
-  roles as a fallback) from the OIDC token and applies the matching Odoo groups on
-  every SSO login. Keycloak stays the single source of truth — no cron, no SQL
-  trigger. Every SSO user becomes an internal user (never `share`/portal); admin
-  is granted from the `admin` / `system-admin` role.
+  roles as a fallback) from the token and applies Odoo groups only for the
+  Startup Pack OAuth provider (`odoo-<tenant>`; legacy `odoo` only when its
+  provider label says Startup Pack). Other OAuth providers keep their normal
+  portal/user type and groups. Startup Pack SSO users become internal; admin is
+  granted from the `admin` / `system-admin` role.
 - **RP-initiated logout.** Overrides `/web/session/logout` so that, after clearing
   the Odoo session, it bounces to the Keycloak end-session endpoint
   (`id_token_hint` + `post_logout_redirect_uri`) — the SSO session is actually
