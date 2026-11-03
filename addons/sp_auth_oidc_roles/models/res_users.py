@@ -26,8 +26,8 @@ ROLE_MAP = {
     # Administration complète. La plateforme assigne `admin` à l'owner ; le
     # chart (init-oidc) crée aussi la taxonomie persona `system-admin`. On mappe
     # les DEUX vers group_system pour couvrir les deux conventions.
-    "admin": ["base.group_system"],
-    "system-admin": ["base.group_system"],
+    "admin": ["base.group_system", "base.group_partner_manager"],
+    "system-admin": ["base.group_system", "base.group_partner_manager"],
     # Personas métier (taxonomie persona du chart). env.ref-gardés.
     "sales-manager": ["sales_team.group_sale_manager"],
     "sales-user": ["sales_team.group_sale_salesman"],
