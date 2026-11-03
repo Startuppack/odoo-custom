@@ -36,12 +36,19 @@ ROLE_MAP = {
     "accounting-manager": ["account.group_account_manager"],
     "accounting-user": ["account.group_account_user"],
     "website-designer": ["website.group_website_designer"],
+    # Utilisateur interne générique (taxonomie persona `internal-user`).
+    "internal-user": ["base.group_user"],
     # Repli rôles realm (users sans rôle par-client).
     "technique": ["base.group_system"],
 }
 
 # Rôles qui confèrent l'admin : pilotent l'ajout/retrait de group_system.
 ADMIN_ROLES = {"admin", "system-admin", "technique"}
+
+# Tout rôle de ROLE_MAP ouvre l'accès interne. Un utilisateur SSO sans un seul
+# de ces rôles n'a aucun droit dans Odoo : il est portail, sans Discuss ni
+# modules internes.
+INTERNAL_ROLES = set(ROLE_MAP)
 
 
 def _is_org_admin(roles):
@@ -272,14 +279,26 @@ class ResUsers(models.Model):
         g_system = ref("base.group_system")
         g_portal = ref("base.group_portal")
 
+        is_admin = bool(roles & ADMIN_ROLES) or _is_org_admin(roles)
+        is_internal = is_admin or bool(roles & INTERNAL_ROLES)
+
         commands = []
-        # 1) Tout user SSO est INTERNE (jamais portail/share). group_system
-        #    implique group_user, mais on l'ajoute explicitement pour les
-        #    non-admins, et on retire le groupe portail (conflit type-groupe).
-        if g_user:
-            commands.append((4, g_user.id))
-        if g_portal:
-            commands.append((3, g_portal.id))
+        if is_internal:
+            # 1) Accès interne : group_user explicite, portail retiré (conflit
+            #    type-groupe). group_system implique group_user mais on l'ajoute
+            #    pour les non-admins aussi.
+            if g_user:
+                commands.append((4, g_user.id))
+            if g_portal:
+                commands.append((3, g_portal.id))
+        else:
+            # 1') Sans rôle interne : portail uniquement. Pas de Discuss, pas de
+            #     modules internes. On retire group_user et group_system (sinon
+            #     la contrainte type-groupe refuse le portail).
+            if g_user:
+                commands.append((3, g_user.id))
+            if g_portal:
+                commands.append((4, g_portal.id))
 
         # 2) Groupes métier dérivés des rôles (union, env.ref-gardé).
         for role in roles:
@@ -288,16 +307,15 @@ class ResUsers(models.Model):
                 if grp:
                     commands.append((4, grp.id))
 
-        # 3) Admin : ajoute group_system si rôle admin ; le RETIRE seulement si
-        #    le token portait bien les rôles du client `odoo` mais sans admin
-        #    (token = source de vérité). Si le claim client `odoo` est absent
-        #    (mapper KC mal configuré), on NE rétrograde PAS — évite une
-        #    démotion de masse accidentelle.
-        is_admin = bool(roles & ADMIN_ROLES) or _is_org_admin(roles)
+        # 3) Admin : ajoute group_system si rôle admin ; le retire sinon. Un
+        #    utilisateur sans rôle interne perd l'admin quelle que soit la forme
+        #    du token. Pour un utilisateur interne sans admin, on ne retire que si
+        #    le token portait bien les rôles du client `odoo` (sinon mapper KC
+        #    mal configuré : on ne rétrograde pas en masse).
         if g_system:
             if is_admin:
                 commands.append((4, g_system.id))
-            elif had_odoo_client_claim:
+            elif not is_internal or had_odoo_client_claim:
                 commands.append((3, g_system.id))
 
         # write() recalcule les groupes impliqués et applique la contrainte de
