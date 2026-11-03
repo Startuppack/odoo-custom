@@ -322,7 +322,15 @@ class ResUsers(models.Model):
         # groupes-type disjoints (portail retiré avant ajout interne).
         # NB Odoo 18 : le champ est `groups_id` (renommé en `group_ids` en 19).
         user.write({"groups_id": commands})
+        # Diagnostic: the group set actually stored after the write, so the
+        # logs show whether a portal decision really removed base.group_user.
+        user.invalidate_recordset(["groups_id", "share"])
         _logger.info(
-            "sp_auth_oidc_roles: %s -> %s (roles KC=%s)",
-            login, "ADMIN" if is_admin else "interne", sorted(roles),
+            "sp_auth_oidc_roles: %s -> %s (roles KC=%s, is_internal=%s, share=%s, "
+            "group_user=%s, group_portal=%s, groups=%s)",
+            login, "ADMIN" if is_admin else ("interne" if is_internal else "portail"),
+            sorted(roles), is_internal, user.share,
+            bool(g_user and g_user in user.groups_id),
+            bool(g_portal and g_portal in user.groups_id),
+            sorted(user.groups_id.mapped("full_name"))[:40],
         )
